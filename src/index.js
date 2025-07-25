@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Express = require('express')
 const publicRoutes = require('./publicRoutes')
 const routes = require('./routes')
@@ -29,10 +30,10 @@ app.use((req, res, next) => {
 app.use(routes)
 
 connectDB().then(() => {
-    app.listen(3000, () => {
-        console.log('Servidor rodando na porta 3000');
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
     });
 });
-
 
 module.exports = app
