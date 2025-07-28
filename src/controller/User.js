@@ -22,27 +22,36 @@ class UserController {
     const user = new userDTO(req.body)
     const { userRepository, accountRepository, cardRepository, salvarUsuario, saveAccount, saveCard } = this.di
 
-    if (!user.isValid()) return res.status(400).json({ 'message': 'não houve informações enviadas' })
+    if (!user.isValid()) {
+      return res.status(400).json({ 'message': 'não houve informações enviadas' })
+    }
+
     try {
       const userCreated = await salvarUsuario({
-        user, repository: userRepository
+        user, 
+        repository: userRepository
       })
 
-      const accountCreated = await saveAccount({ account: new accountDTO({ userId: userCreated.id, type: 'Debit' }), repository: accountRepository })
+      const accountCreated = await saveAccount({ 
+        account: new accountDTO({ userId: userCreated.id, type: 'Debit' }), 
+        repository: accountRepository 
+      })
 
-      const firstCard = new cardDTO({ 
+      const firstCard = new cardDTO({
         type: 'GOLD',
-        number: 13748712374891010 ,
+        number: 13748712374891010,
         dueDate: '2027-01-07',
         functions: 'Debit',
         cvc: '505',
         paymentDate: null,
         name: userCreated.username,
         accountId: accountCreated.id,
-        type: 'Debit' 
       })
 
-      const cardCreated = await saveCard({ card: firstCard, repository: cardRepository })
+      await saveCard({ 
+        card: firstCard, 
+        repository: cardRepository
+      })
 
       res.status(201).json({
         message: 'usuário criado com sucesso',
@@ -52,10 +61,9 @@ class UserController {
       console.log(error)
       res.status(500).json({ message: 'caiu a aplicação' })
     }
-
   }
-  async find(req, res) {
 
+  async find(req, res) {
     const { userRepository, getUser } = this.di
     try {
       const users = await getUser({ repository: userRepository })
@@ -68,32 +76,47 @@ class UserController {
         message: 'Erro no servidor'
       })
     }
-    
   }
+
   async auth(req, res) {
     const { userRepository, getUser } = this.di
     const { email, password } = req.body
+
+    try {
     const user = await getUser({ repository: userRepository, userFilter: { email, password } })
-    
-    if (!user?.[0]) return res.status(401).json({ message: 'Usuário não encontrado' })
-    const userToTokenize = {...user[0], id: user[0].id.toString()}
+
+    if (!user?.[0]) {
+      return res.status(401).json({ message: 'Usuário não encontrado' })
+    }
+
+    const userData = user[0]
+
+    const userToTokenize = { ...userData, id: userData.id.toString() }
+
+    const token = jwt.sign(userToTokenize, JWT_SECRET, { expiresIn: '12h' })
+
     res.status(200).json({
       message: 'Usuário autenticado com sucesso',
       result: {
-        token: jwt.sign(userToTokenize, JWT_SECRET, { expiresIn: '12h' })
-      }
-    })
+        token: token,
+        name: userData.username,
+        email: userData.email
+        }
+      })
+    } catch (error) {
+      console.error(error)
+      res.status(500).json({ message: 'Erro no servidor ao autenticar'})
+    }
   }
+    
   static getToken(token) {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET)
-        return decoded
+      const decoded = jwt.verify(token, JWT_SECRET)
+      return decoded
     } catch (error) {
         return null
     }
   }
 }
-
-
 
 module.exports = UserController
