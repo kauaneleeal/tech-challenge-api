@@ -2,32 +2,16 @@ version: "3.8"
 
 services:
   backend:
-    build: .               
+    build: .
     container_name: tech-backend
     restart: always
     ports:
-      - "3001:3001"         
+      - "3001:3001"
     environment:
-      MONGO_URI: mongodb://mongo:27017/techdb
+      MONGO_URI: mongodb+srv://techchallengegp7:5U9TNEijNKFCRn6Y@techchallenge.f8m1qcn.mongodb.net/?retryWrites=true&w=majority&appName=TechChallenge
       PORT: 3001
-    depends_on:
-      - mongo
     networks:
       - tech-network
-
-  mongo:
-    image: mongo:5.0
-    container_name: tech-mongo
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - tech-network
-
-volumes:
-  mongo-data:
 
 networks:
   tech-network:
